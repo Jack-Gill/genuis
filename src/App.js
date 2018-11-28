@@ -4,6 +4,8 @@ import ResultsScrollView from './components/ResultsScrollView';
 import axios from 'axios';
 import ResultsItem from './components/ResultsItem';
 
+const BASE_URL = '/.netlify/functions/proxy/'
+
 class App extends Component {
     state = {
         searchTerm: '',
@@ -18,7 +20,7 @@ class App extends Component {
         this.setState({searchDisabled: true});
         event.preventDefault();
 
-        axios.get('http://localhost:9017/search?q=blood')
+        axios.get(`${BASE_URL}search?q=${this.state.searchTerm}`)
             .then(function (response) {
                 // handle success
                 console.log(response);
