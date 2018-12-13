@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import logo from '../logo.svg'
 
 const ResultsItem = ({name, artist}) => (
     <Wrapper>
