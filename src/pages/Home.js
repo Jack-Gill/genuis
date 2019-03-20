@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
+import { Link } from "@reach/router"
 // components
 import ResultsScrollView from "components/ResultsScrollView";
 import ResultsItem from "components/ResultsItem";
@@ -72,6 +73,7 @@ class Home extends Component {
                 artist: result.primary_artist ? result.primary_artist.name : 'unknown',
                 thumbnailURL: result.header_image_thumbnail_url,
                 hot: result.stats ? result.stats.hot : false,
+                id: result.id,
             };
         });
 

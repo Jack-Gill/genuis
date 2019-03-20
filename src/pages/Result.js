@@ -32,6 +32,10 @@ class Result extends Component {
             this.setState({
                 lyricsData: data.lyricsData
             });
+            
+            console.log(data.lyricsData);
+
+            //axios.get(`${BASE_URL}translate/`).then(({data}) => console.log(data.translation));
         });
     };
 

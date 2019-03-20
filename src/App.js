@@ -9,11 +9,8 @@ class App extends Component {
     render() {
         return (
             <Wrapper>
-                <div>
+                <div style={{ paddingBottom: 24, }}>
                     <Link to="/">Home</Link>
-                    <Link to="/result/167180">
-                        Blood on the Leaves (result/167180)
-                    </Link>
                 </div>
                 <Router>
                     <Home path="/" />

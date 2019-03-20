@@ -3,11 +3,20 @@ const serverless = require("serverless-http");
 const bodyParser = require("body-parser");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { Translate } = require('@google-cloud/translate');
+const projectId = 'Genuis';
 
 const app = express();
 app.use(bodyParser.json());
 
 app.get("*", async (req, res) => {
+    // Instantiates a client
+    const translate = new Translate({projectId});
+
+    // The target language
+    const firstTarget = 'ja';
+    const secondTarget = 'en';
+    
     const { path } = req.query;
     const pageHtml = await axios
         .get(`https://genius.com${path}`)
@@ -37,6 +46,26 @@ app.get("*", async (req, res) => {
         };
 
         lyricsData.push(lyric);
+    });
+    
+    let promiseArray = lyricsData.map(({text}) => {
+        return translate.translate(text, firstTarget);
+    });
+    
+    let results = await Promise.all(promiseArray);
+    
+    results.forEach((result, index) => {
+        lyricsData[index].text = result[0];
+    });
+    
+    promiseArray = lyricsData.map(({text}) => {
+        return translate.translate(text, secondTarget);
+    });
+    
+    results = await Promise.all(promiseArray);
+    
+    results.forEach((result, index) => {
+        lyricsData[index].text = result[0];
     });
 
     res.send({
