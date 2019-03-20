@@ -16,11 +16,31 @@ app.get("*", async (req, res) => {
         });
 
     const $ = cheerio.load(pageHtml);
+    const lyrics = $(".lyrics p");
+    const children = lyrics.contents();
 
-    const lyrics = $(".lyrics");
-    console.log(lyrics);
+    const lyricsData = [];
+
+    children.map((_, element) => {
+        const el = $(element);
+        if (el[0].name === "br") return;
+
+        const data = el[0].data;
+        if (data && data.startsWith("\n")) {
+            const newData = data.replace("\n", "").trim();
+            if (newData === "") return;
+        }
+
+        const lyric = {
+            text: el.text().trim(),
+            referentId: el.data("id")
+        };
+
+        lyricsData.push(lyric);
+    });
+
     res.send({
-        lyricsHtml: lyrics.toString()
+        lyricsData
     });
 });
 
