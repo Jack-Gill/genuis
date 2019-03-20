@@ -1,9 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
-import logo from '../logo.svg'
 
-const ResultsItem = ({name, artist, thumbnailURL, hot}) => (
-    <div>
+const ResultsItem = ({name, artist, thumbnailURL, hot, onClick}) => (
+    <div onClick={onClick}>
         <Wrapper>
             <div style={{
                 display: 'flex',

@@ -15,6 +15,7 @@ class App extends Component {
         this.state = {
             searchTerm: '',
             searching: false,
+            viewingItem: false,
             searchDisabled: false,
             searchResults: [],
         };
@@ -29,10 +30,19 @@ class App extends Component {
         this.getResultsDebounced(searchTerm)
     };
 
-    handleSubmit = (event) => {
-        this.setState({searchDisabled: true});
+    resultItemClicked = (event) => {
         event.preventDefault();
-        this.getResults(this.state.searchTerm);
+        this.setState({
+            viewingItem: true,
+            searchDisabled: true,
+        });
+        console.log('No');
+    };
+
+    handleSubmit = (event) => {
+        // this.setState({searchDisabled: true});
+        // event.preventDefault();
+        // this.getResults(this.state.searchTerm);
     };
 
     getResults = (searchTerm) => {
@@ -74,7 +84,8 @@ class App extends Component {
         const {
             searching,
             searchTerm,
-            searchResults
+            searchResults,
+            viewingItem,
         } = this.state;
         console.log(searchResults.length);
         return (
@@ -104,10 +115,14 @@ class App extends Component {
                             }}
                         />
                     </form>
-                    {searchResults.length > 0 && searchTerm.length > 0 &&
+                    {!viewingItem && searchResults.length > 0 && searchTerm.length > 0 &&
                         <ResultsScrollView>
                             {searchResults.map((item) => (
-                                <ResultsItem  key={`results-item-${item.name}-${item.artist}`} {...item} />
+                                <ResultsItem
+                                    key={`results-item-${item.name}-${item.artist}`}
+                                    onClick={this.resultItemClicked}
+                                    {...item}
+                                />
                             ))}
                         </ResultsScrollView>}
                 </div>
