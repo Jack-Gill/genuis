@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
+import {Link} from '@reach/router';
 
-const ResultsItem = ({name, artist, thumbnailURL, hot, onClick}) => (
-    <div onClick={onClick}>
+const ResultsItem = ({name, artist, thumbnailURL, hot, id, onClick}) => (
+    <StyledLink to={`/result/${id}`}>
         <Wrapper>
             <div style={{
                 display: 'flex',
@@ -30,7 +31,7 @@ const ResultsItem = ({name, artist, thumbnailURL, hot, onClick}) => (
                 </div>
             }
         </Wrapper>
-    </div>
+    </StyledLink>
 );
 
 const Wrapper = styled.div`
@@ -39,6 +40,11 @@ const Wrapper = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
+`;
+
+const StyledLink = styled(Link)`
+    color: black;
+    text-decoration: none;
 `;
 
 export default ResultsItem;
