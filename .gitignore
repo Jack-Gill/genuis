@@ -11,7 +11,7 @@
 # production
 /build
 /lambda
-/json
+/src/json
 
 # misc
 .DS_Store

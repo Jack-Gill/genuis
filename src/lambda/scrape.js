@@ -10,8 +10,12 @@ const app = express();
 app.use(bodyParser.json());
 
 app.get("*", async (req, res) => {
+    const credentials = {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    };
     // Instantiates a client
-    const translate = new Translate({ projectId });
+    const translate = new Translate({ credentials, projectId });
 
     // The target language
     const firstTarget = "ja";
