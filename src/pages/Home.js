@@ -37,7 +37,6 @@ class Home extends Component {
             viewingItem: true,
             searchDisabled: true,
         });
-        console.log('No');
     };
 
     handleSubmit = (event) => {
@@ -50,12 +49,10 @@ class Home extends Component {
         axios.get(`${BASE_URL}proxy/search?q=${searchTerm}`)
             .then((response) => {
                 // handle success
-                console.log(response);
                 this.handleSearchResultData(response);
             })
             .catch(function (error) {
                 // handle error
-                console.log(error);
             })
             .then(function () {
                 // always executed
@@ -88,7 +85,6 @@ class Home extends Component {
             searchResults,
             viewingItem,
         } = this.state;
-        console.log(searchResults.length);
         return (
             <Wrapper>
                 <div
