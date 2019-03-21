@@ -1,27 +1,26 @@
-const express = require('express');
-const serverless = require('serverless-http');
-const bodyParser = require('body-parser');
-const axios = require('axios');
+import axios from "axios";
 
-const app = express();
-app.use(bodyParser.json());
+exports.handler = async (event, context) => {
+    const { path, queryStringParameters } = event;
+    const endpoint = path.replace("/proxy", "");
 
-app.get('*', async (req, res) => {
-  const { originalUrl } = req;
-  const endpoint = originalUrl.replace('/proxy', '');
+    try {
+        const response = await axios.get(`https://api.genius.com${endpoint}`, {
+            headers: {
+                Authorization: `Bearer ${process.env.AUTH_TOKEN}`
+            },
+            params: queryStringParameters
+        });
 
-  try {
-    const response = await axios.get(`https://api.genius.com${endpoint}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.AUTH_TOKEN}`
-      }
-    });
-
-    res.send(response.data);
-  } catch (error) {
-    console.error("ERROR", error);
-    res.send(error.message);
-  }
-});
-
-module.exports.handler = serverless(app);
+        return {
+            statusCode: 200,
+            body: JSON.stringify(response.data)
+        };
+    } catch (error) {
+        console.error("ERROR", error);
+        return {
+            statusCode: 500,
+            body: error.message
+        };
+    }
+};
