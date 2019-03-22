@@ -40,12 +40,6 @@ class Home extends Component {
         });
     };
 
-    handleSubmit = (event) => {
-        // this.setState({searchDisabled: true});
-        // event.preventDefault();
-        // this.getResults(this.state.searchTerm);
-    };
-
     getResults = (searchTerm) => {
         axios.get(`${BASE_URL}proxy/search?q=${searchTerm}`)
             .then((response) => {
@@ -95,7 +89,7 @@ class Home extends Component {
                     }}
                 >
                     <form
-                        onSubmit={this.handleSubmit}
+                        onSubmit={e => e.preventDefault()}
                         style={{
                             maxWidth: '320',
                         }}
