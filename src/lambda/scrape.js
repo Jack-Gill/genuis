@@ -60,26 +60,18 @@ exports.handler = async (event, context) => {
     const { path, songId } = event.queryStringParameters;
     const lyricsData = await scrapeContent(path);
 
-    let promiseArray = lyricsData.map(({ text }) => {
-        return translate.translate(text, firstTarget);
-    });
+    let lyricsText = lyricsData.map(({ text }) => text);
 
     try {
-        let results = await Promise.all(promiseArray);
+        let translationResults = await translate.translate(lyricsText, firstTarget);
+        // Result of a translate call is always an array, the first item of which is the translated text/texts
+        let translatedLyrics = translationResults[0];
 
-        results.forEach((result, index) => {
-            lyricsData[index].text = result[0];
-        });
+        translationResults = await translate.translate(translatedLyrics, secondTarget);
+        translatedLyrics = translationResults[0];
 
-        // translate back into english
-        promiseArray = lyricsData.map(({ text }) => {
-            return translate.translate(text, secondTarget);
-        });
-
-        results = await Promise.all(promiseArray);
-
-        results.forEach((result, index) => {
-            lyricsData[index].text = result[0];
+        translatedLyrics.forEach((result, index) => {
+            lyricsData[index].text = result;
         });
     } catch (err) {
         console.log(err);
@@ -89,9 +81,11 @@ exports.handler = async (event, context) => {
             body: JSON.stringify(err)
         };
     }
+    
+    const body = { lyricsData };
 
     return {
         statusCode: 200,
-        body: JSON.stringify(lyricsData)
+        body: JSON.stringify(body)
     };
 };
