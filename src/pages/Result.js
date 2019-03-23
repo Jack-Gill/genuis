@@ -25,7 +25,7 @@ const Result = ({ resultId }) => {
 
     const scrapePage = path => {
         axios.get(`${BASE_URL}scrape?path=${path}`).then(({ data }) => {
-            setLyricsData(data.lyricsData);
+            setLyricsData(data);
         });
     };
 
