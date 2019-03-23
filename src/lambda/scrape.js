@@ -1,6 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { Translate } = require("@google-cloud/translate");
+const TOO_MANY_SEGMENTS_MESSAGE = 'Too many text segments';
 
 const scrapeContent = async path => {
     const pageHtml = await axios
@@ -57,35 +58,46 @@ exports.handler = async (event, context) => {
     const firstTarget = "ja";
     const secondTarget = "en";
 
-    const { path, songId } = event.queryStringParameters;
-    const lyricsData = await scrapeContent(path);
-
-    let lyricsText = lyricsData.map(({ text }) => text);
-
-    try {
-        let translationResults = await translate.translate(lyricsText, firstTarget);
-        // Result of a translate call is always an array, the first item of which is the translated text/texts
-        let translatedLyrics = translationResults[0];
-
-        translationResults = await translate.translate(translatedLyrics, secondTarget);
-        translatedLyrics = translationResults[0];
-
-        translatedLyrics.forEach((result, index) => {
-            lyricsData[index].text = result;
-        });
-    } catch (err) {
-        console.log(err);
-
-        return {
-            statusCode: 500,
-            body: JSON.stringify(err)
-        };
-    }
+    const { path } = event.queryStringParameters;
+    let lyricsData = await scrapeContent(path);
     
-    const body = { lyricsData };
+    let retry = false;
+    
+    do {
+        let lyricsText = lyricsData.map(({text}) => text);
+    
+        try {
+            let translationResults = await translate.translate(lyricsText, firstTarget);
+            // Result of a translate call is always an array, the first item of which is the translated text/texts
+            let translatedLyrics = translationResults[0];
+    
+            translationResults = await translate.translate(translatedLyrics, secondTarget);
+            translatedLyrics = translationResults[0];
+    
+            translatedLyrics.forEach((result, index) => {
+                lyricsData[index].text = result;
+            });
+            retry = false;
+        } catch (err) {
+            console.log(err);
+            
+            if(err.message === TOO_MANY_SEGMENTS_MESSAGE) {
+                lyricsData = lyricsData.slice(0, 99);
+                lyricsData.push({ text: '(song is too long)'})
+                retry = true;
+            }
+            else {
+                return {
+                    statusCode: 500,
+                    body: JSON.stringify(err)
+                };
+            }
+        }
+    }
+    while (retry);
 
     return {
         statusCode: 200,
-        body: JSON.stringify(body)
+        body: JSON.stringify(lyricsData)
     };
 };
