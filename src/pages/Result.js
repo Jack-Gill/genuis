@@ -20,36 +20,25 @@ const Referent = styled.a`
 `;
 
 const Result = ({ resultId }) => {
-    const [song, setSong] = useState(null);
-    const [lyricsData, setLyricsData] = useState(null);
-
-    const scrapePage = path => {
-        axios.get(`${BASE_URL}scrape?path=${path}`).then(({ data }) => {
-            setLyricsData(data);
-        });
-    };
-
+    const [songData, setSongData] = useState(null);
+    
     useEffect(() => {
-        axios.get(`${BASE_URL}proxy/songs/${resultId}`).then(result => {
-            console.log(result);
-
-            const song = result.data.response.song;
-            setSong(song);
-            scrapePage(song.path);
+        axios.get(`${BASE_URL}getWarpedSong?songId=${resultId}`).then(result => {
+            setSongData(result.data);
         });
     }, [resultId]);
 
     return (
         <div>
             <div>id: {resultId}</div>
-            {song ? (
+            {songData ? (
                 <div>
-                    <div>{song.primary_artist.name}</div>
+                    <div>{songData.name}</div>
                 </div>
             ) : null}
-            {lyricsData ? (
+            {songData ? (
                 <div>
-                    {lyricsData.map(({ text, referentId }) => {
+                    {songData.warped.map(({ text, referentId }) => {
                         if (referentId) {
                             return (
                                 <>

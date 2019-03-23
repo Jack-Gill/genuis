@@ -5,13 +5,25 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const { Translate } = require("@google-cloud/translate");
 
+// require'd local modules
+const { proxyRequest } = require("./proxy");
+
 // variable initialization
 const TOO_MANY_SEGMENTS_MESSAGE = "Too many text segments";
 const projectId = "Genuis";
+// The target language
+const firstTarget = "ja";
+const secondTarget = "en";
+
+// Instantiates a translate client
+const translate = new Translate({
+    projectId
+});
+
 admin.initializeApp(functions.config().firebase);
 const db = admin.firestore();
 
-const scrapeContent = async path => {
+async function scrapeContent(path) {
     const pageHtml = await axios
         .get(`https://genius.com${path}`)
         .then(({ data }) => {
@@ -36,38 +48,21 @@ const scrapeContent = async path => {
 
         const lyric = {
             text: el.text().trim(),
-            referentId: el.data("id")
+            referentId: el.data("id") || null
         };
 
         lyricsData.push(lyric);
     });
 
     return lyricsData;
-};
+}
 
-exports.scrape = functions.https.onRequest(async (request, res) => {
-    const docRef = db.collection("users").doc("alovelace");
-
-    const setAda = docRef.set({
-        first: "Ada",
-        last: "Lovelace",
-        born: 1815
-    });
-    // Instantiates a translate client
-    const translate = new Translate({
-        projectId
-    });
-
-    // The target language
-    const firstTarget = "ja";
-    const secondTarget = "en";
-
-    const { path } = request.query;
-    let lyricsData = await scrapeContent(path);
+async function translateSongLyrics(lyricsData) {
+    let lyricsDataCopy = lyricsData;
     let retry = false;
 
     do {
-        let lyricsText = lyricsData.map(({ text }) => text);
+        let lyricsText = lyricsDataCopy.map(({ text }) => text);
 
         try {
             let translationResults = await translate.translate(
@@ -84,41 +79,116 @@ exports.scrape = functions.https.onRequest(async (request, res) => {
             translatedLyrics = translationResults[0];
 
             translatedLyrics.forEach((result, index) => {
-                lyricsData[index].text = result;
+                lyricsDataCopy[index].text = result;
             });
             retry = false;
         } catch (err) {
             if (err.message === TOO_MANY_SEGMENTS_MESSAGE) {
-                lyricsData = lyricsData.slice(0, 99);
-                lyricsData.push({ text: "(song is too long)" });
+                lyricsDataCopy = lyricsDataCopy.slice(0, 99);
+                lyricsDataCopy.push({ text: "(song is too long)" });
                 retry = true;
             } else {
-                res.send(err);
+                throw err;
             }
         }
     } while (retry);
 
-    res.send(lyricsData);
+    return lyricsDataCopy;
+}
+
+exports.getWarpedSong = functions.https.onRequest(async (request, res) => {
+    const { songId } = request.query;
+    // attempt to get songId out of firebase
+    const songDocRef = db.collection("songs").doc(songId);
+
+    console.log("GET WARPED SONG");
+
+    let responseObj = {};
+
+    songDocRef
+        .get()
+        .then(async doc => {
+            console.log("RESOLVED REQUEST FOR DOC");
+
+            // if song with matching id exists
+            if (doc.exists) {
+                console.log("DOC EXISTS");
+
+                // if warped version exists.
+                const { original, warped, name } = doc.data();
+                if (warped) {
+                    console.log("HAS WARPED");
+                    // return it
+                    res.send({ name, warped });
+                    return;
+                } else if (original) {
+                    // translate to warped version
+                    const warped = await translateSongLyrics(original);
+                    // store in firebase
+                    songDocRef.set({
+                        name,
+                        original,
+                        warped
+                    });
+                    // return it
+                    res.send({
+                        name,
+                        warped
+                    });
+                    return;
+                }
+            } else {
+                console.log("DOC DOES NOT EXIST");
+
+                // else
+                // scrape it to get original
+                const { data } = await proxyRequest(`/songs/${songId}`, {});
+                const song = data.response.song;
+                console.log("GOT DATA");
+
+                const path = song.path;
+                const originalLyrics = await scrapeContent(path);
+                console.log("ORIGINAL LYRICS");
+
+                // translate to warped version
+                const warpedLyrics = await translateSongLyrics(originalLyrics);
+                console.log("WARPED LYRICS", warpedLyrics);
+
+                // store in firebase
+                try {
+                    songDocRef.set({
+                        name: song.primary_artist.name,
+                        original: originalLyrics,
+                        warped: warpedLyrics
+                    });
+                } catch (err) {
+                    console.log(err);
+                }
+                // return it
+                res.send({
+                    name: song.primary_artist.name,
+                    warped: warpedLyrics
+                });
+                return;
+            }
+            return;
+        })
+        .catch(err => {
+            res.send(err);
+        });
 });
 
-exports.proxy = functions.https.onRequest(async (request, res) => {
+const proxy = functions.https.onRequest(async (request, res) => {
     const { params, originalUrl } = request;
     //TODO: get correct endpoint
 
     try {
-        const response = await axios.get(
-            `https://api.genius.com${originalUrl}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.AUTH_TOKEN}`
-                },
-                params: params
-            }
-        );
-
+        const response = await proxyRequest(originalUrl, params);
         res.send(response.data);
     } catch (error) {
         console.error("ERROR", error);
         res.send(error.message);
     }
 });
+
+exports.proxy = proxy;
