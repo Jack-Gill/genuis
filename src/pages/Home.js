@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import axios from "axios";
-import { Link } from "@reach/router"
 // components
 import ResultsScrollView from "components/ResultsScrollView";
 import ResultsItem from "components/ResultsItem";

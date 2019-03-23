@@ -146,6 +146,7 @@ exports.getWarpedSong = functions.https.onRequest(async (request, res) => {
                 // else
                 // scrape it to get original
                 const { data } = await proxyRequest(`/songs/${songId}`, {});
+
                 const song = data.response.song;
                 console.log("GOT DATA");
 
