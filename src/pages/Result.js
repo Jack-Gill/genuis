@@ -31,6 +31,8 @@ const Result = ({ resultId }) => {
 
     useEffect(() => {
         axios.get(`${BASE_URL}proxy/songs/${resultId}`).then(result => {
+            console.log(result);
+
             const song = result.data.response.song;
             setSong(song);
             scrapePage(song.path);
