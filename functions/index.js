@@ -65,19 +65,22 @@ async function translateSongLyrics(lyricsData) {
         let lyricsText = lyricsDataCopy.map(({ text }) => text);
 
         try {
+            // eslint-disable-next-line
             let translationResults = await translate.translate(
                 lyricsText,
                 firstTarget
-            );
-            // Result of a translate call is always an array, the first item of which is the translated text/texts
-            let translatedLyrics = translationResults[0];
-
+                );
+                // Result of a translate call is always an array, the first item of which is the translated text/texts
+                let translatedLyrics = translationResults[0];
+                
+            // eslint-disable-next-line
             translationResults = await translate.translate(
                 translatedLyrics,
                 secondTarget
-            );
-            translatedLyrics = translationResults[0];
-
+                );
+                translatedLyrics = translationResults[0];
+                
+            // eslint-disable-next-line
             translatedLyrics.forEach((result, index) => {
                 lyricsDataCopy[index].text = result;
             });
