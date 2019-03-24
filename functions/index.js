@@ -10,6 +10,7 @@ const { Translate } = require("@google-cloud/translate");
 const { proxyRequest } = require("./proxy");
 
 const corsHandler = cors({
+    // TODO: get deploy url
     origin: ["localhost:3000"]
 });
 
@@ -194,8 +195,6 @@ exports.getWarpedSong = functions.https.onRequest(async (req, res) => {
 const proxy = functions.https.onRequest(async (req, res) => {
     corsHandler(req, res, async () => {
         const { params, originalUrl } = request;
-        //TODO: get correct endpoint
-
         try {
             const response = await proxyRequest(originalUrl, params);
             res.send(response.data);
