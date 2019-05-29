@@ -106,6 +106,8 @@ async function translateSongLyrics(lyricsData) {
 }
 
 exports.getWarpedSong = functions.https.onRequest(async (req, res) => {
+    console.log("Request", req);
+
     corsHandler(req, res, async () => {
         const { songId } = req.query;
         // attempt to get songId out of firebase
@@ -193,8 +195,10 @@ exports.getWarpedSong = functions.https.onRequest(async (req, res) => {
 });
 
 const proxy = functions.https.onRequest(async (req, res) => {
+    console.log(req);
+
     corsHandler(req, res, async () => {
-        const { params, originalUrl } = request;
+        const { params, originalUrl } = req;
         try {
             const response = await proxyRequest(originalUrl, params);
             res.send(response.data);
